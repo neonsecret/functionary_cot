@@ -10,6 +10,8 @@ from functionary.prompt_template.prompt_template_v1 import PromptTemplateV1
 from functionary.prompt_template.prompt_template_v2 import PromptTemplateV2
 from functionary.prompt_template.llama31_reasoning_prompt_template import Llama31ReasoningTemplate
 
+from functionary.prompt_template.llama31_r1_cot_template import Llama31DeepseekR1ThinkTemplate
+
 
 def get_available_prompt_template_versions() -> List[PromptTemplate]:
     """This function will get all the available prompt templates in the module.

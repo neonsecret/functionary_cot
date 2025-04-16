@@ -164,7 +164,7 @@ def print_trainable_parameters(model):
 
 
 def get_device_map(
-    training_args: TrainingArguments, lora_args: LoraArguments
+        training_args: TrainingArguments, lora_args: LoraArguments
 ) -> Optional[Dict]:
     device_map = None
     world_size = int(os.environ.get("WORLD_SIZE", 1))
@@ -179,10 +179,10 @@ def get_device_map(
 
 
 def load_model_with_rope_scaling(
-    model_args: ModelArguments,
-    training_args: TrainingArguments,
-    lora_args: LoraArguments,
-    data_args: DataArguments,
+        model_args: ModelArguments,
+        training_args: TrainingArguments,
+        lora_args: LoraArguments,
+        data_args: DataArguments,
 ) -> transformers.AutoModelForCausalLM:
     config = transformers.AutoConfig.from_pretrained(
         model_args.model_name_or_path,
@@ -241,9 +241,9 @@ def load_model_with_rope_scaling(
 
 
 def prepare_model_for_training(
-    model: transformers.AutoModelForCausalLM,
-    training_args: TrainingArguments,
-    lora_args: LoraArguments,
+        model: transformers.AutoModelForCausalLM,
+        training_args: TrainingArguments,
+        lora_args: LoraArguments,
 ):
     if lora_args.lora_target_modules == "all":
         target_modules = find_all_linear_names(model)
@@ -375,7 +375,7 @@ def train():
         )
         print_rank0("final eval size: ", len(eval_dataset))
         print_rank0("****** Examples from eval_dataset *****")
-        training_utils.print_some_examples(eval_dataset, tokenizer)
+        # training_utils.print_some_examples(eval_dataset, tokenizer)
 
     print_rank0("tokenizer.model_max_length: ", tokenizer.model_max_length)
 
