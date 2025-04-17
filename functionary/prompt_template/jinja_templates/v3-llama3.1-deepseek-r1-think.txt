@@ -45,7 +45,7 @@
             {# --- FINE-TUNING DATA FORMAT ASSUMPTION --- #}
             {# Assumes the model is trained to output: <think>...</think><function=...>... #}
             {# Or potentially the <think> block is passed in message['content'] even with tool_calls #}
-            {%- if message['content'] and message['content']|strip|length > 0 -%}
+            {%- if message['content'] and message['content']|length > 0 -%}
                  {{ message['content'] }} {# Output potential leading <think> block #}
             {%- endif -%}
             {%- for tool_call in message['tool_calls'] -%}
