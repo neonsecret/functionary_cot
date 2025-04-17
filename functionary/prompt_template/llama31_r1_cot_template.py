@@ -58,13 +58,16 @@ class Llama31DeepseekR1ThinkTemplate(PromptTemplate):
 
         # --- MODIFICATION START: Handle <think> block ---
         original_llm_output = llm_output  # Keep for potential debugging
+        think_content = None
         think_match = THINK_BLOCK_PATTERN.match(llm_output)
         if think_match:
+            think_content = think_match.group(0).strip()
             # Strip the think block from the beginning
             llm_output = llm_output[think_match.end():]
-            print(f"DEBUG: Stripped think block. Remaining output: '{llm_output[:100]}...'")  # Debug print
+            # print(f"DEBUG: Stripped think block. Remaining output: '{llm_output[:100]}...'")  # Debug print
         else:
-            print(f"DEBUG: No think block found at start of: '{llm_output[:100]}...'")  # Debug print
+            pass
+            # print(f"DEBUG: No think block found at start of: '{llm_output[:100]}...'")  # Debug print
         # --- MODIFICATION END ---
 
         # Add forced-function from tool_choice if exists (reuse Llama 3.1 logic)
@@ -165,7 +168,16 @@ class Llama31DeepseekR1ThinkTemplate(PromptTemplate):
             print(
                 f"WARN: Parsed both text content and tool calls. Text: '{text_response[:50]}...', Tool Calls: {len(tool_calls)}")
 
-        return {"role": "assistant", "content": text_response, "tool_calls": tool_calls}
+        final_content = None
+        if think_content:
+            final_content = think_content
+            if text_response and text_response.strip():
+                # Decide on separator, e.g., newline or space
+                final_content += "\n" + text_response.strip()
+        # Priority 2: Use text_response if no think block was captured
+        elif text_response and text_response.strip():
+            final_content = text_response.strip()
+        return {"role": "assistant", "content": final_content, "tool_calls": tool_calls}
 
     # --- Streaming Logic Modifications ---
 

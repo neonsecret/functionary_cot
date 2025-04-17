@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     # You can download gguf files from https://huggingface.co/meetkai/functionary-small-v2.5-GGUF
     llm = Llama.from_pretrained(
-        repo_id="bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF",
+        repo_id="lmstudio-community/DeepSeek-R1-Distill-Qwen-32B-GGUF",
         filename="*Q4_K_M*",
         verbose=False,
         n_ctx=1024
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # Create tokenizer from HF. We should use tokenizer from HF to make sure that tokenizing is correct
     # Because there might be a mismatch between llama-cpp tokenizer and HF tokenizer and the model was trained using HF tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", legacy=True
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", legacy=True
     )
     # prompt_template will be used for creating the prompt
     # prompt_template = get_prompt_template_from_tokenizer(tokenizer)
@@ -59,14 +59,20 @@ if __name__ == '__main__':
     ]
 
     # We use function generate (instead of __call__) so we can pass in list of token_ids
-    for token_id in llm.generate(token_ids):
+    generator = llm.generate(token_ids)
+    while True:
+        try:
+            token_id = next(generator)
+        except:
+            break
         if token_id in stop_token_ids:
             break
         gen_tokens.append(token_id)
+        print(tokenizer.decode(token_id))
 
-    llm_output = tokenizer.decode(gen_tokens)
-    print(llm_output)
+    gen_tokens = "<think>\n" + tokenizer.decode(gen_tokens)
+    print("llm output:", gen_tokens)
 
     # parse the message from llm_output
-    result = prompt_template.parse_assistant_response(llm_output)
-    print(result)
+    result = prompt_template.parse_assistant_response(gen_tokens)
+    print("result:", result)
