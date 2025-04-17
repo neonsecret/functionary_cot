@@ -23,7 +23,7 @@ class Llama31DeepseekR1ThinkTemplate(PromptTemplate):
     function_separator = Llama31Template.function_separator
     start_header = Llama31Template.start_header
     end_header = Llama31Template.end_header
-    eos_token = Llama31Template.eos_token
+    eos_token = "<｜end▁of▁sentence｜>"
     eof_message = Llama31Template.eof_message
     fn_param_sep_token = Llama31Template.fn_param_sep_token
 
@@ -41,8 +41,7 @@ class Llama31DeepseekR1ThinkTemplate(PromptTemplate):
         return prompt_utils.reorder_tool_messages_by_tool_call_ids(messages)
 
     def get_stop_tokens_for_generation(self) -> List[str]:
-        # Stop tokens remain the same as Llama 3.1
-        return [self.eos_token, "<|end_of_text|>", self.eof_message]
+        return [self.eos_token]
 
     def parse_assistant_response(
             self, llm_output: str, tool_choice: Any = None
