@@ -374,7 +374,7 @@ def prepare_training_inputs_batch(
     max_length: Optional[int] = None,
     return_tensor: bool = True,
     keep_assistant_prefix: bool = False,
-    verbose=False,
+    verbose=True,
 ) -> List[Dict[str, Union[str, Dict]]]:
     """This function is used for when you want to get a dictionary input for the model.forward.
     The dictionary will contain: input_ids, attention_maks, labels.
