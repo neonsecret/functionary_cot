@@ -215,7 +215,7 @@ def prepare_training_inputs(
     max_length: Optional[int] = None,
     return_tensor: bool = True,
     keep_assistant_prefix: bool = False,
-    verbose=False,
+    verbose=True,
 ) -> Dict[str, Union[str, Dict]]:
     """This function is used to convert a data point into input that is ready for training.
     The inputs is of format: {"input_ids": xxx, "labels": xxx, "attention_mask": xxx}
