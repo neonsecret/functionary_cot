@@ -32,8 +32,8 @@ class Llama31DeepseekR1ThinkTemplate(PromptTemplate):
         return []
 
     def get_assistant_prefixes(self) -> List[str]:
-        # Assistant still starts the same way
-        return [f"{self.start_header}assistant{self.end_header}\n\n"]
+        # Use the DeepSeek R1 Assistant tag
+        return ["<｜Assistant｜>"]
 
     def pre_process_messages_before_inference(self, messages: List[Dict]) -> List[Dict]:
         """Order the tool results by the order of tool call ids"""
