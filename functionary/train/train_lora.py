@@ -420,6 +420,7 @@ def train():
     else:
         trainer.train()
     trainer.save_state()
+    trainer.save_model("model_out")
 
     # check if zero3 mode enabled
     if is_deepspeed_zero3_enabled():
