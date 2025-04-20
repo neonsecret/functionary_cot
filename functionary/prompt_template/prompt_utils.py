@@ -291,6 +291,9 @@ def convert_code_interpreter_to_function(tools: List[Dict]) -> List[Dict]:
     _tools = []
     if tools:
         for tool in tools:
+            if "type" not in tool:
+                print(tool)
+                continue
             if tool["type"] == "code_interpreter":
                 _tools.append(
                     {

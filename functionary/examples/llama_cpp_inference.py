@@ -64,3 +64,4 @@ llm_output = tokenizer.decode(gen_tokens)
 # parse the message from llm_output
 result = prompt_template.parse_assistant_response(llm_output)
 print(result)
+

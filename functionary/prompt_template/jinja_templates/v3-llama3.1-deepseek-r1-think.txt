@@ -1,0 +1,85 @@
+{# version=v3-llama3.1-deepseek-r1-think-ds-tokens #}
+{# Uses DeepSeek R1 tokens with Llama 3.1 style function calls & think blocks #}
+{%- if not tools is defined -%}
+    {%- set tools = none -%}
+{%- endif -%}
+
+{%- set has_code_interpreter = tools | selectattr("type", "equalto", "code_interpreter") | list | length > 0 -%}
+{%- if has_code_interpreter -%}
+    {%- set tools = tools | rejectattr("type", "equalto", "code_interpreter") | list -%}
+{%- endif -%}
+
+{# --- DeepSeek R1 Token Style System Prompt Handling --- #}
+{% set ns = namespace(system_prompt='', is_first_user_message=true) %}
+{%- for message in messages %}
+    {%- if message['role'] == 'system' %}
+        {% set ns.system_prompt = message['content'] %}
+    {%- endif %}
+{%- endfor %}
+
+{# Start with BOS token and the extracted system prompt (DeepSeek R1 style) #}
+{{- bos_token + ns.system_prompt -}}
+
+{# --- Tool Definitions and Instructions --- #}
+{# Inject tool definitions/instructions into the *first* user message #}
+{%- set tool_instructions = "" -%}
+{%- if tools %}
+    {%- set tool_instructions = tool_instructions + "\nYou have access to the following functions:\n\n" -%}
+    {%- for t in tools %}
+        {%- if "type" in t -%}
+            {% set tool_instructions = tool_instructions + "Use the function '" + t["function"]["name"] + "' to '" + t["function"]["description"] + "'\n" + t["function"] | tojson + "\n\n" %}
+        {%- else -%}
+            {% set tool_instructions = tool_instructions + "Use the function '" + t["name"] + "' to '" + t["description"] + "'\n" + t | tojson + "\n\n" %}
+        {%- endif -%}
+    {%- endfor %}
+    {%- set tool_instructions = tool_instructions + '\nThink very carefully before calling functions.\nIf a you choose to call a function ONLY reply in the following format:\n<{start_tag}={function_name}>{parameters}{end_tag}\nwhere\n\nstart_tag => `<function`\nparameters => a JSON dict with the function argument name as key and function argument value as value.\nend_tag => `</function>`\n\nHere is an example,\n<function=example_function_name>{"example_name": "example_value"}</function>\n\nReminder:\n- Function calls MUST follow the specified format, start with <function= and end with </function>\n- Required parameters MUST be specified\n- Only call one function at a time\n- Put the entire function call reply on one line\n\n' -%}
+{%- endif %}
+
+
+{# --- Message Loop using DeepSeek R1 Tokens --- #}
+{%- for message in messages %}
+    {%- if message['role'] == 'user' -%}
+        {# Use DeepSeek R1 User Tag #}
+        {%- if ns.is_first_user_message %}
+            {{ '<｜User｜>' + tool_instructions + message['content'] + '<｜end of sentence｜>' }}
+            {% set ns.is_first_user_message = false %}
+        {%- else %}
+             {{ '<｜User｜>' + message['content'] + '<｜end of sentence｜>' }}
+        {%- endif %}
+    {%- elif message['role'] == 'tool' or message['role'] == 'ipython' -%} {# Handle both possible tool role names #}
+        {# Use DeepSeek R1 Tool Output Tags #}
+        {{ '<｜tool output begin｜>' + message['content'] + '<｜tool output end｜><｜end of sentence｜>' }}
+    {%- elif message['role'] == 'assistant' -%}
+        {# Use DeepSeek R1 Assistant Tag #}
+        {{ '<｜Assistant｜>'}}
+        {%- if 'tool_calls' in message and message['tool_calls'] and message['tool_calls']|length > 0 -%}
+             {# --- FINE-TUNING DATA FORMAT ASSUMPTION --- #}
+             {# Assumes model outputs: <think>...</think><function=...>...<｜end of sentence｜> #}
+             {# Include content (think block) if provided in the message dict #}
+            {%- if message['content'] and message['content']|length > 0 -%}
+                 {{ message['content'] }} {# Output potential leading <think> block #}
+            {%- endif -%}
+            {# Format function calls using Llama 3.1 *style* but within DS Assistant turn #}
+            {%- for tool_call in message['tool_calls'] -%}
+                {%- if tool_call["function"]["name"] == "python" -%}
+                    {{ '<|python_tag|>' + tool_call['function']['arguments'] }} {# Keep python tag if using code interpreter fine-tuning #}
+                {%- else -%}
+                    {# The NEW function call format the model needs to learn #}
+                    {{ '<function=' + tool_call['function']['name'] + '>' + tool_call['function']['arguments'] + '</function>' }}
+                {%- endif -%}
+            {%- endfor -%}
+            {# Use DeepSeek R1 EOS token after function calls #}
+            {{ '<｜end of sentence｜>' }}
+        {%- elif message['content'] and message['content']|length > 0 -%}
+             {# --- FINE-TUNING DATA FORMAT ASSUMPTION --- #}
+             {# Assumes model outputs: <think>...</think>Actual response<｜end of sentence｜> #}
+             {# Pass the entire content through, including the <think> block #}
+            {{ message['content'] + '<｜end of sentence｜>' }} {# Use DeepSeek R1 EOS token #}
+        {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}
+
+{# Add generation prompt - Use DeepSeek R1 Assistant tag and <think> #}
+{%- if add_generation_prompt -%}
+    {{ '<｜Assistant｜><think>\n' }} {# Prompt model to start with Assistant tag then think #}
+{%- endif -%}
