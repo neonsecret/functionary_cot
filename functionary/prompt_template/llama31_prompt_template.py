@@ -12,7 +12,7 @@ def parse_function_call_from_text(function_call_text: str) -> Optional[Dict]:
     index = function_call_text.find(">")
     if index >= 0:
         func_name = function_call_text[:index].strip()
-        arguments = function_call_text[index + 1 :].strip()
+        arguments = function_call_text[index + 1:].strip()
         return {"name": func_name, "arguments": arguments}
     return None
 
@@ -47,7 +47,7 @@ class Llama31Template(PromptTemplate):
         return [self.eos_token, "<|end_of_text|>", self.eof_message]
 
     def parse_assistant_response(
-        self, llm_output: str, tool_choice: Any = None
+            self, llm_output: str, tool_choice: Any = None
     ) -> Dict:
         # first remove stop tokens if there exists
         for stop in self.get_stop_tokens_for_generation():
@@ -56,7 +56,7 @@ class Llama31Template(PromptTemplate):
 
         # add forced-function from tool_choice if exists
         llm_output = (
-            self.get_generation_prefix_for_tool_choice(tool_choice) + llm_output
+                self.get_generation_prefix_for_tool_choice(tool_choice) + llm_output
         )
 
         tool_calls = []
@@ -68,7 +68,7 @@ class Llama31Template(PromptTemplate):
 
         while len(llm_output) > 0:
             if llm_output.startswith(python_tag):  # check if use code interpreter
-                code = llm_output[len(python_tag) :]
+                code = llm_output[len(python_tag):]
                 function_call = {
                     "name": "python",
                     "arguments": code,
@@ -85,7 +85,7 @@ class Llama31Template(PromptTemplate):
             elif llm_output.startswith(func_prefix):  # Check if function_call
                 end_index = llm_output.find(end_func)
                 if end_index >= 0:
-                    function_call_text = llm_output[len(func_prefix) : end_index]
+                    function_call_text = llm_output[len(func_prefix): end_index]
                     function_call = parse_function_call_from_text(function_call_text)
 
                     tool_calls.append(
@@ -95,7 +95,7 @@ class Llama31Template(PromptTemplate):
                             "function": function_call,
                         }
                     )
-                    llm_output = llm_output[end_index + len(end_func) :]
+                    llm_output = llm_output[end_index + len(end_func):]
                 else:
                     # TODO cannot find close function call
                     text_response += llm_output
@@ -115,11 +115,11 @@ class Llama31Template(PromptTemplate):
         return {"role": "assistant", "content": text_response, "tool_calls": tool_calls}
 
     def initialize_fsm_gen_state(
-        self,
-        tool_choice: Union[str, Tool],
-        curr_text: str,
-        curr_tokens: Optional[List[int]],
-        add_code_interpreter: Optional[bool],
+            self,
+            tool_choice: Union[str, Tool],
+            curr_text: str,
+            curr_tokens: Optional[List[int]],
+            add_code_interpreter: Optional[bool],
     ) -> Dict:
         func_name = None
         # To force a text response ("tool_choice"="none")
@@ -161,12 +161,12 @@ class Llama31Template(PromptTemplate):
         )
 
     def stream_delta_text(
-        self,
-        gen_state: Dict,
-        delta_text: str,
-        finish_reason: Optional[str],
-        tools_or_functions: List[Dict],
-        tool_choice: Any,
+            self,
+            gen_state: Dict,
+            delta_text: str,
+            finish_reason: Optional[str],
+            tools_or_functions: List[Dict],
+            tool_choice: Any,
     ) -> Tuple[Dict, Optional[Union[Dict, List[Dict]]]]:
         if finish_reason is not None:  # handle if finish
             if gen_state["stage"] in ["parameter", "code-interpreter"]:
@@ -252,11 +252,11 @@ class Llama31Template(PromptTemplate):
                         )
                     )
             elif "</" in gen_state["curr_text"] and (
-                "</function>".startswith(
-                    gen_state["curr_text"][gen_state["curr_text"].rindex("</") :]
-                    + delta_text
-                )
-                or "</function>" in gen_state["curr_text"] + delta_text
+                    "</function>".startswith(
+                        gen_state["curr_text"][gen_state["curr_text"].rindex("</"):]
+                        + delta_text
+                    )
+                    or "</function>" in gen_state["curr_text"] + delta_text
             ):
                 pass
             else:
@@ -290,12 +290,12 @@ class Llama31Template(PromptTemplate):
         return gen_state, responses
 
     def update_fsm_gen_state(
-        self,
-        gen_state: Dict,
-        new_token: Optional[str],
-        new_token_id: Optional[int],
-        options: Optional[List],
-        tokenizer: Any,
+            self,
+            gen_state: Dict,
+            new_token: Optional[str],
+            new_token_id: Optional[int],
+            options: Optional[List],
+            tokenizer: Any,
     ) -> Dict:
         if gen_state["curr_tokens"] is not None:
             # Update curr_tokens and curr_text
@@ -309,7 +309,7 @@ class Llama31Template(PromptTemplate):
             if gen_state["curr_tokens"] is not None:
                 gen_state["text_buffer"].append(
                     tokenizer.decode(gen_state["curr_tokens"])[
-                        len(gen_state["text_buffer"]) :
+                    len(gen_state["text_buffer"]):
                     ]
                 )
             else:
@@ -346,7 +346,7 @@ class Llama31Template(PromptTemplate):
                 if new_token is not None and "<" in new_token:
                     gen_state["text_buffer"].append(new_token)
                 elif new_token_id is not None and "<" in tokenizer.decode(
-                    [new_token_id]
+                        [new_token_id]
                 ):
                     gen_state["text_buffer"].append(tokenizer.decode([new_token_id]))
         elif gen_state["stage"] == "function":
@@ -369,8 +369,8 @@ class Llama31Template(PromptTemplate):
             if "</function>" in gen_state["curr_text"]:
                 gen_state["stage"] = "pre-function"
                 gen_state["curr_text"] = gen_state["curr_text"][
-                    gen_state["curr_text"].rindex("</function>") + len("</function>") :
-                ]
+                                         gen_state["curr_text"].rindex("</function>") + len("</function>"):
+                                         ]
                 gen_state["curr_tokens"] = (
                     tokenizer.encode(gen_state["curr_text"], add_special_tokens=False)
                     if gen_state["curr_tokens"] is not None

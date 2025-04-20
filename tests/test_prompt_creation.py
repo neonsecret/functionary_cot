@@ -124,7 +124,7 @@ class TestPromptTemplate(unittest.TestCase):
             self.run_prepare_training_inputs(
                 template_version=template_version,
                 pretrained=pretrained_model,
-                verbose=False,
+                verbose=True,
             )
 
     def run_prepare_training_inputs(
