@@ -403,10 +403,13 @@ def prepare_training_inputs_batch(
         tools_or_functions = (
             messages["tools"] if "tools" in messages else messages.get("functions", [])
         )
-
-        prompt_str = prompt_template.get_prompt_from_messages(
-            messages["messages"], tools_or_functions
-        )  # prompt_str is the concatenation of all prompts from messages
+        try:
+            prompt_str = prompt_template.get_prompt_from_messages(
+                messages["messages"], tools_or_functions
+            )  # prompt_str is the concatenation of all prompts from messages
+        except:
+            print(messages, "\n", messages["messages"], "\n", tools_or_functions)
+            print(prompt_template, tokenizer)
         prompt_str_list.append(prompt_str)
     max_length = max_length if max_length is not None else tokenizer.model_max_length
 
