@@ -420,7 +420,7 @@ def train():
     else:
         trainer.train()
     trainer.save_state()
-    trainer.save_model("out_model")
+    # trainer.save_model("out_model")
 
     # check if zero3 mode enabled
     if is_deepspeed_zero3_enabled():
@@ -439,7 +439,8 @@ def train():
         )
 
     if training_args.local_rank == 0:
-        model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+        torch.save(state_dict, os.path.join(training_args.output_dir, "adapter_peft.bin"))
+        model.save_pretrained(training_args.output_dir)
         tokenizer.save_pretrained(training_args.output_dir)
 
 
